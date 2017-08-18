@@ -1,0 +1,63 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="dev.votu.rfatvapp.activities.ExchangesFragment">
+
+    <LinearLayout
+        android:layout_marginTop="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:background="@color/colorGreen"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/inventory_filter_text_description"/>
+
+        <Spinner
+            android:id="@+id/spinner_inventory_status_filter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/fragment_exchange_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="Escolha os Inventários que deseja enviar"/>
+
+        <Spinner
+            android:id="@+id/spinner_inventory_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+        <TextView
+            android:layout_margin="16dp"
+            android:id="@+id/selected_inventory_to_export"
+            android:layout_width="match_parent"
+            android:background="@color/colorAccent2_blue_material"
+            android:layout_height="60dp"
+            tools:text="'1 - Inventário ABCD\n2 - Inventario XPTO\n3 - Inventario FOO2"/>
+        <Button
+            android:id="@+id/submit_inventory"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="@string/submit_button_text"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_marginTop="16dp"
+        android:layout_height="wrap_content"
+        android:background="@color/colorGreen">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="S"/>
+    </LinearLayout>
+
+</LinearLayout>
