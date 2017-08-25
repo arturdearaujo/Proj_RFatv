@@ -5,8 +5,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
-import dev.votu.rfatvapp.activities.ExchangesFragment;
 import dev.votu.rfatvapp.activities.ConnectReaderFragment;
+import dev.votu.rfatvapp.activities.ExchangesFragment;
 import dev.votu.rfatvapp.activities.InventoryFragment;
 
 /**
@@ -20,23 +20,31 @@ public class MyPagerAdapter extends FragmentPagerAdapter {
     /**
      * The number of tabs os the app.
      */
-    final int PAGE_COUNT = 3;
-    Context context;
-    private String tabTitles[] = new String[]{"Leitores", "Inventários", "Comandos"};
+    private final int PAGE_COUNT = 3;
+    private Context context;
+
+    private ConnectReaderFragment mConnectReaderFragment;
+    private InventoryFragment mInventoryFragment;
+    private ExchangesFragment mExchangesFragment;
+
+    private String tabTitles[] = new String[]{"Conectar", "Leitura", "Inventários"};
 
     public MyPagerAdapter(FragmentManager fm, Context context) {
         super(fm);
         this.context = context;
+        mConnectReaderFragment = new ConnectReaderFragment();
+        mInventoryFragment = new InventoryFragment();
+        mExchangesFragment = new ExchangesFragment();
     }
 
     @Override
     public Fragment getItem(int position) {
         if (position == 0) {
-            return new ConnectReaderFragment();
+            return mConnectReaderFragment;
         } else if (position == 1) {
-            return new InventoryFragment();
+            return mInventoryFragment;
         } else {
-            return new ExchangesFragment();
+            return mExchangesFragment;
         }
     }
 

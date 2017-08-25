@@ -1,38 +1,38 @@
 <resources>
     <string name="app_name">RFAtv</string>
 
-    <string name="search">Search</string>
-    <string name="about">About</string>
+    <string name="search">Buscar</string>
+    <string name="about">Sobre</string>
 
     <string name="action_connect_status">Connect Status</string>
-    <string name="button_connect">Connect Selected Reader</string>
-    <string name="button_disconnect">Disconnect Reader</string>
+    <string name="button_connect">Conectar</string>
+    <string name="button_disconnect">Desconectar</string>
 
-    <string name="connect_failed_toast">Connection failed</string>
-    <string name="reader_disconnected_toast">The reader is not connected</string>
+    <string name="connect_failed_toast">Connexion fail</string>
+    <string name="reader_disconnected_toast">Reader not connected</string>
     <string name="initialization_failed_toast">Scan mode initialization failed</string>
     <string name="connected_toast">Device connected</string>
     <string name="set_power_failed_toast">Error setting RF power</string>
     <string name="set_tagtype_failed_toast">Error setting tag type</string>
     <string name="read_failed_toast">Error starting read</string>
     <string name="read_stop_failed_toast">Error stopping read</string>
-
     <string name="read_tag_type_failed_toast">Error reading tag type capabilities</string>
 
-    <string name="TagPopulationText"><b>Expected tag population</b></string>
-    <string name="TagPopulationLessThan80">Less than 80</string>
-    <string name="TagPopulationMoreThan80">More than 80</string>
-    <string name="TagPopulationOnly1">Only 1</string>
+    <string name="TagPopulationText"><b>Quantidade de etiquetas esperadas</b></string>
+    <string name="ReportTagsOnlyOnceCheckBox">Exibir TAG uma vez por leitura</string>
+    <string name="TagPopulationLessThan80">Menos de 80</string>
+    <string name="TagPopulationMoreThan80">Mais de 80</string>
+    <string name="TagPopulationOnly1">Apenas 1</string>
 
-    <string name="ReadEPCC1G2">Read EPCC1G2 tags</string>
-    <string name="ReadISO6B">Read ISO6B tags</string>
-    <string name="ReadATA">Read ATA tags</string>
+    <string name="ReadEPCC1G2">Etiquetas EPCC1G2</string>
+    <string name="ReadISO6B">Etiquetas ISO6B</string>
+    <string name="ReadATA">Etiquetas ATA</string>
 
 
-    <string name="select_device_text">Escolha um dos dispositivos abaixo para conectar:</string>
-    <string name="list_of_readers_title">lista de leitores cadastrados:</string>
+    <string name="select_device_text">Escolha um dispositivo para conectar:</string>
+    <string name="list_of_readers_title">Lista de Leitores Cadastrados:</string>
     <string name="submit_button_text">Enviar</string>
-    <string name="inventory_filter_text_description">Filtro o status dos inventários abaixo:</string>
+    <string name="inventory_filter_text_description">Filtrar por:</string>
 
 
 </resources>

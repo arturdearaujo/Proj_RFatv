@@ -9,15 +9,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.Objects;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import dev.votu.rfatvapp.BluetoothConnection;
 import dev.votu.rfatvapp.R;
-import dev.votu.rfatvapp.legacy.TagTypeManager;
 import dev.votu.rfatvapp.adapters.MyPagerAdapter;
+import dev.votu.rfatvapp.util.TagTypeManager;
 
 /**
  * Projeto RF Atv app.
@@ -27,39 +31,41 @@ import dev.votu.rfatvapp.adapters.MyPagerAdapter;
  * autor: Artur de Araujo   e-mail: artur.at4@gmail.com
  * 18/08/2017
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements
+        ConnectReaderFragment.OnSelectReaderFragmentInteractionListener,
+        TagTypeManager.OnTagTypeChangeListener {
 
-    /*****************************************************
-     * CUSTOM FIELDS
-     *****************************************************/
-    private BluetoothConnection mBluetoothConnection = null;
-    private BluetoothDevice mBluetoothDevice;
-
-    private BlockingQueue<String> mBluetoothMessageQueue;
-    private Thread mBRIMessageHandler;
-
-    private boolean mTagReportOnce = false;
-    private boolean mReadInProgress = false;
-    private boolean mWasConnectedWhenPaused = false;
-
-    private String[] mPopulationCommands = null;
-    private String mTagToLocate = null;
-    private TagTypeManager mTagTypeManager;
-
-    private Integer mPowerSetting = 30;
-    /*****************************************************
-     * UI FIELDS
-     *****************************************************/
-    Toolbar toolbar;
-    ViewPager viewPager;
-    MyPagerAdapter adapter;
-    TabLayout tabLayout;
-    MenuItem mActionConnectStatus = null;
     /*****************************************************
      * CONSTANTS
      *****************************************************/
     private final int BRI_SHORT_TIMEOUT_MILLISECONDS = 500;
     private final int BRI_LONG_TIMEOUT_MILLISECONDS = 5000;
+    public TagTypeManager mTagTypeManager;
+    /*****************************************************
+     * UI FIELDS
+     *****************************************************/
+    ConnectReaderFragment mConnectReaderFragment;
+    ExchangesFragment mExchangesFragment;
+    InventoryFragment mInventoryFragment;
+    Toolbar toolbar;
+    ViewPager viewPager;
+    MyPagerAdapter adapter;
+    TabLayout tabLayout;
+    LinearLayout mConnectedSettingsLinearLayout;
+    MenuItem mActionConnectStatus = null;
+    /*****************************************************
+     * CUSTOM FIELDS
+     *****************************************************/
+    private BluetoothConnection mBluetoothConnection = null;
+    private BluetoothDevice mBluetoothDevice;
+    private BlockingQueue<String> mBluetoothMessageQueue;
+    private Thread mBRIMessageHandler;
+    private boolean mTagReportOnce = false;
+    private boolean mReadInProgress = false;
+    private boolean mWasConnectedWhenPaused = false;
+    private String[] mPopulationCommands = null;
+    private String mTagToLocate = null;
+    private Integer mPowerSetting = 30;
 
     /*****************************************************
      * NATIVE METHODS
@@ -81,6 +87,11 @@ public class MainActivity extends AppCompatActivity {
         // Create an adapter that knows which fragment should be shown on each page
         adapter = new MyPagerAdapter(getSupportFragmentManager(), this);
 
+        // Get the three fragments used in the application
+        mConnectReaderFragment = (ConnectReaderFragment) adapter.getItem(0);
+        mInventoryFragment = (InventoryFragment) adapter.getItem(1);
+        mExchangesFragment = (ExchangesFragment) adapter.getItem(2);
+
         // Set the adapter onto the view pager
         viewPager.setAdapter(adapter);
 
@@ -94,6 +105,13 @@ public class MainActivity extends AppCompatActivity {
         //   3. Set the tab layout's tab names with the view pager's adapter's titles
         //      by calling onPageTitle()
         tabLayout.setupWithViewPager(viewPager);
+
+        mTagTypeManager = new TagTypeManager(this);
+        mBluetoothMessageQueue = new ArrayBlockingQueue<>(100);
+        mBRIMessageHandler = new Thread(new BRIEventMessageHandler());
+        mBRIMessageHandler.start();
+
+        mConnectedSettingsLinearLayout = (LinearLayout) findViewById(R.id.connected_settings_linear_layout);
     }
 
     @Override
@@ -126,8 +144,7 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         if (mWasConnectedWhenPaused) {
-            //TODO: Estudar as implicações da linha de código comentada abaixo, pois está definida apenas para o Fragment da aplicação original.
-//            mSelectReaderFragment.SetConnectionState(true);
+            mConnectReaderFragment.setConnectionState(true);
         }
     }
 
@@ -165,13 +182,16 @@ public class MainActivity extends AppCompatActivity {
         return Result;
     }
 
-
     private void ConnectBluetooth() {
         try {
             mBluetoothConnection = new BluetoothConnection(mBluetoothDevice, mBluetoothMessageQueue);
             mBluetoothConnection.start();
             MyToast(R.string.connected_toast);
+
+            // Set the connected_status icon
             mActionConnectStatus.setIcon(R.drawable.ic_action_connect_status);
+
+            // Create the initialization attributes in a array
             String[] AttributeSettings = {
                     "ATTRIB CHKSUM=OFFC9",
                     "ATTRIB ECHO=OFF",
@@ -188,26 +208,35 @@ public class MainActivity extends AppCompatActivity {
                     "ATTRIB IDREPORT=1",
                     "ATTRIB NOTAGRPT=1",
             };
-
             SendInitializationCommands(AttributeSettings);
 
-            mTagTypeManager.setAllowed(SendBRICommand("cap tagtype", BRI_SHORT_TIMEOUT_MILLISECONDS, R.string.read_tag_type_failed_toast));
+            // This way to implement setAllowed() grants the String tagTypeCapabilities will never be null.
+            // Remember to check if this uncontrolled loop is affecting the UX.
+            String tagTypeCapabilities;
+            do {
+                tagTypeCapabilities = SendBRICommand("cap tagtype", BRI_SHORT_TIMEOUT_MILLISECONDS, R.string.read_tag_type_failed_toast);
+            } while (Objects.equals(tagTypeCapabilities, ""));
+            mTagTypeManager.setAllowed(tagTypeCapabilities, getApplicationContext());
+
             onRFPowerChange(mPowerSetting);
             onTagTypeChange();
+            // O problema aqui é que este comando só pode ser executado se mPopulationCommands != null
             onTagPopulationChange(mPopulationCommands);
 
             for (String S : AttributeSettings) {
                 if (SendBRICommand(S, BRI_SHORT_TIMEOUT_MILLISECONDS, R.string.initialization_failed_toast) == null)
                     break;
             }
+
+            mConnectedSettingsLinearLayout.setVisibility(View.VISIBLE);
+
         } catch (IOException e) {
-            // TODO: 18/08/2017 Estudar as consequências de comentar essa linha de código pela segunda vez.
-//            mSelectReaderFragment.SetConnectionState(false);
+            mConnectReaderFragment.setConnectionState(false);
             MyToast(R.string.connect_failed_toast);
         }
     }
 
-
+    @Override
     public void onConnectChanged(BluetoothDevice bt) {
         if (bt != null) {
             if (mBluetoothConnection == null) {
@@ -216,6 +245,11 @@ public class MainActivity extends AppCompatActivity {
             }
         } else
             CleanUp();
+    }
+
+    @Override
+    public TagTypeManager getTagTypeManager() {
+        return mTagTypeManager;
     }
 
     public void onRFPowerChange(int powerSetting) {
@@ -230,8 +264,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void onTagPopulationChange(String[] BRICommands) {
         mPopulationCommands = BRICommands;
-        if (mBluetoothConnection != null)
+        if (mBluetoothConnection != null && mPopulationCommands.length >= 0)
             SendInitializationCommands(mPopulationCommands);
+        else
+            Toast.makeText(this, "mPopulationCommands == null || mBluetoothConnection == null", Toast.LENGTH_SHORT).show();
     }
 
     public void onTagReportChange(boolean ReportOnce) {
@@ -253,7 +289,6 @@ public class MainActivity extends AppCompatActivity {
 
 /*          TODO: 18/08/2017 Estudar nova abordagem para refatorar esse trecho de códico.
             Encontrar a nova forma de puxar o fragment em uso para frente do usuário.
-
             // switch to the Read Tags tab
             getActionBar().setSelectedNavigationItem(READ_TAGS_TAB);
 */
@@ -289,9 +324,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void CleanUp() {
         mActionConnectStatus.setIcon(R.drawable.ic_action_disconnect_status);
+        mConnectedSettingsLinearLayout = (LinearLayout) findViewById(R.id.connected_settings_linear_layout);
+        mConnectedSettingsLinearLayout.setVisibility(View.GONE);
 
-        // TODO: 18/08/2017 Estudar as implicações e as razões que levaram o programador escolher travar os botões aqui na linha abaixo.
-//        mSelectReaderFragment.SetConnectionState(false);
+        mConnectReaderFragment.setConnectionState(false);
         if (mBluetoothConnection != null) {
             mBluetoothConnection.cancel();
             mBluetoothConnection = null;
@@ -312,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
 //            if (mReadTagsFragment != null) {
-                if (mEvtMsg.startsWith("EVT:TAG")) {
+            if (mEvtMsg.startsWith("EVT:TAG")) {
 
 /*
                     // switch to the Read Tags tab
@@ -320,22 +356,22 @@ public class MainActivity extends AppCompatActivity {
                     mReadTagsFragment.WriteTag(mEvtMsg.substring(9));
 */
 
-                } else if (mEvtMsg.startsWith("EVT:TRIGGER")) {
-                    if (mEvtMsg.contains("TRIGPULL")) {
+            } else if (mEvtMsg.startsWith("EVT:TRIGGER")) {
+                if (mEvtMsg.contains("TRIGPULL")) {
 
   /*
                         // switch to the Read Tags tab
                         getActionBar().setSelectedNavigationItem(READ_TAGS_TAB);
 */
 
-                        StartRead();
-                    } else if (mEvtMsg.contains("TRIGRELEASE")) {
-                        StopRead();
-                    }
+                    StartRead();
+                } else if (mEvtMsg.contains("TRIGRELEASE")) {
+                    StopRead();
+                }
 //                } else if (mEvtMsg.startsWith("EVT:THERMAL")) {
 //                } else if (mEvtMsg.startsWith("EVT:BATTERY")) {
 //                } else if (mEvtMsg.startsWith("EVT:ANTENNA FAULT")) {
-                }
+            }
 //            }
         }
     }

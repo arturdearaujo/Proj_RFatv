@@ -19,17 +19,15 @@ import java.util.concurrent.TimeUnit;
 public class BluetoothConnection extends Thread {
 
     private final BluetoothSocket mmSocket;
+    private final Semaphore RunningSemaphore = new Semaphore(0);
+    private final SynchronousQueue<String> BRIMsgQueue = new SynchronousQueue<String>();
     private InputStream mInStream = null;
     private OutputStream mOutStream = null;
     private BlockingQueue<String> mMsgQ;
 
-    private final Semaphore RunningSemaphore = new Semaphore(0);
-    private final SynchronousQueue<String> BRIMsgQueue = new SynchronousQueue<String>();
-
     public BluetoothConnection(BluetoothDevice device,
                                BlockingQueue<String> MsgQ
-                              ) throws IOException
-    {
+    ) throws IOException {
         mMsgQ = MsgQ;
 
         // Cancel discovery because it will slow down the connection
@@ -42,17 +40,15 @@ public class BluetoothConnection extends Thread {
 
         // Get a BluetoothSocket to connect with the given BluetoothDevice
         // Use the "well-known" SPP UUID
-        tmp = device.createRfcommSocketToServiceRecord(
-                               UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-                                                                                          );
+        tmp = device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
         try {
             // Connect the device through the socket. This will block
             // until it succeeds or throws an exception
             tmp.connect();
-            mInStream  = tmp.getInputStream();
+            mInStream = tmp.getInputStream();
             mOutStream = tmp.getOutputStream();
         } catch (IOException e) {
-                Log.d("BluetoothConnection", "IO exception connectException: " + e.getMessage());
+            Log.e("BluetoothConnection", "IO exception connectException: " + e.getMessage());
             // Unable to connect; close the socket and get out
             tmp.close();
             throw e;
@@ -70,9 +66,10 @@ public class BluetoothConnection extends Thread {
                 // output and return it to the caller
                 try {
                     String Result = "";
-                    for ( ; ; ) {
+                    while (true) {
                         String Line;
-                        if ((Line = BRIMsgQueue.poll(TimeoutMilliseconds, TimeUnit.MILLISECONDS)) == null) break;
+                        if ((Line = BRIMsgQueue.poll(TimeoutMilliseconds, TimeUnit.MILLISECONDS)) == null)
+                            break;
 
                         Result += Line + "\n";
                         if (Line.equals("OK>")) {
@@ -99,21 +96,21 @@ public class BluetoothConnection extends Thread {
             try {
                 String Line;
                 if ((Line = BR.readLine()) != null) {
-                   if (Line.startsWith("EVT:")) {
-                       // Event messages are passed back through the parent's Handler
-                       if (!mMsgQ.offer(Line)) {
-                           // message dropped
-                           Log.d("BluetoothConnection", "Dropped" + Line);
-                       }
-                   } else {
-                       // Non-event messages are the result of a BRI command and are
-                       // posted to the BRIMsgQueue to be consumed by SendBRICommand
+                    if (Line.startsWith("EVT:")) {
+                        // Event messages are passed back through the parent's Handler
+                        if (!mMsgQ.offer(Line)) {
+                            // message dropped
+                            Log.d("BluetoothConnection", "Dropped" + Line);
+                        }
+                    } else {
+                        // Non-event messages are the result of a BRI command and are
+                        // posted to the BRIMsgQueue to be consumed by SendBRICommand
                         try {
-                           BRIMsgQueue.put(Line);
+                            BRIMsgQueue.put(Line);
                         } catch (InterruptedException e) {
                             Log.d("BluetoothConnection", "BRIMsgQueue.put interrupted: " + e.getMessage());
                         }
-                   }
+                    }
                 }
             } catch (IOException e) {
                 Log.d("BluetoothConnection", "IO exception reading stream: " + e.getMessage());

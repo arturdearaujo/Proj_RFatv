@@ -8,4 +8,12 @@
         <item name="colorAccent">@color/colorAccent1_green_material</item>
     </style>
 
+    <style name="project_text_appearance">
+        <item name="android:background">@color/background2_transparent</item>
+        <item name="android:elevation">@dimen/text_elevation</item>
+        <item name="android:text">@string/select_device_text</item>
+        <item name="android:textAppearance">@style/Base.TextAppearance.AppCompat.Medium</item>
+        <item name="android:textColor">@color/colorAccent1_green_material</item>
+    </style>
+
 </resources>

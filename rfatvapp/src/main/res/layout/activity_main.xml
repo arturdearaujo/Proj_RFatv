@@ -18,7 +18,7 @@
         <android.support.design.widget.CollapsingToolbarLayout
             android:id="@+id/collapsing_tool_bar"
             android:layout_width="match_parent"
-            android:layout_height="340dp"
+            android:layout_height="200dp"
             android:background="@color/background4_theme"
             android:fitsSystemWindows="true"
             app:contentScrim="?attr/colorPrimary"
@@ -28,7 +28,7 @@
 
             <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="350dp"
+                android:layout_height="200dp"
                 android:contentDescription="@string/app_name"
                 android:scaleType="centerInside"
                 android:src="@drawable/logo_votu"
