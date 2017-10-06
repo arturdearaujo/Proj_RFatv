@@ -1,0 +1,19 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent1_green_material</item>
+    </style>
+
+    <style name="project_text_appearance">
+        <item name="android:background">@color/background2_transparent</item>
+        <item name="android:elevation">16dp</item>
+        <!--<item name="android:text">@string/select_device_text</item>-->
+        <item name="android:textAppearance">@style/Base.TextAppearance.AppCompat.Medium</item>
+        <item name="android:textColor">@color/colorAccent1_green_material</item>
+    </style>
+
+</resources>
