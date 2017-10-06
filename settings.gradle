@@ -1,1 +1,1 @@
-include ':rfatvapp'
+include ':rfatvapp', ':rfatvapp-beta'
