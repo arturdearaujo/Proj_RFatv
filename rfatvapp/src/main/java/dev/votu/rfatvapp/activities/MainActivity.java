@@ -1,6 +1,23 @@
+/*
+ * Copyright (C) 2017 VOTU RFid Solutions
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package dev.votu.rfatvapp.activities;
 
 import android.bluetooth.BluetoothDevice;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
@@ -18,9 +35,9 @@ import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import dev.votu.rfatvapp.BluetoothConnection;
 import dev.votu.rfatvapp.R;
 import dev.votu.rfatvapp.adapters.MyPagerAdapter;
+import dev.votu.rfatvapp.bluetooth.BluetoothConnection;
 import dev.votu.rfatvapp.util.TagTypeManager;
 
 /**
@@ -33,6 +50,7 @@ import dev.votu.rfatvapp.util.TagTypeManager;
  */
 public class MainActivity extends AppCompatActivity implements
         ConnectReaderFragment.OnSelectReaderFragmentInteractionListener,
+        InventoryFragment.OnReadTagsFragmentInteractionListener,
         TagTypeManager.OnTagTypeChangeListener {
 
     /*****************************************************
@@ -66,11 +84,9 @@ public class MainActivity extends AppCompatActivity implements
     private String[] mPopulationCommands = null;
     private String mTagToLocate = null;
     private Integer mPowerSetting = 30;
-
     /*****************************************************
      * NATIVE METHODS
      ****************************************************/
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -213,14 +229,17 @@ public class MainActivity extends AppCompatActivity implements
             // This way to implement setAllowed() grants the String tagTypeCapabilities will never be null.
             // Remember to check if this uncontrolled loop is affecting the UX.
             String tagTypeCapabilities;
-            do {
-                tagTypeCapabilities = SendBRICommand("cap tagtype", BRI_SHORT_TIMEOUT_MILLISECONDS, R.string.read_tag_type_failed_toast);
-            } while (Objects.equals(tagTypeCapabilities, ""));
-            mTagTypeManager.setAllowed(tagTypeCapabilities, getApplicationContext());
+            //TODO: verificaro impacto dessa cláusula if abaixo implementada para que o aplicativo rode em versões android antigas.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                do {
+                    tagTypeCapabilities = SendBRICommand("cap tagtype", BRI_SHORT_TIMEOUT_MILLISECONDS, R.string.read_tag_type_failed_toast);
+                } while (Objects.equals(tagTypeCapabilities, ""));
+                mTagTypeManager.setAllowed(tagTypeCapabilities, getApplicationContext());
+            }
 
             onRFPowerChange(mPowerSetting);
             onTagTypeChange();
-            // O problema aqui é que este comando só pode ser executado se mPopulationCommands != null
+            //TODO: O problema aqui é que este comando só pode ser executado se mPopulationCommands != null
             onTagPopulationChange(mPopulationCommands);
 
             for (String S : AttributeSettings) {
